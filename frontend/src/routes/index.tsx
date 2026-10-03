@@ -10,6 +10,7 @@ import {
   Music2,
   X,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import heroImage from "@/assets/investing-app-hero.jpg";
 import helpImage from "@/assets/help-investor.jpg";
@@ -119,8 +120,8 @@ function Index() {
           <a href="#help">Support <ChevronDown /></a>
         </nav>
         <div className="account-actions">
-          <a className="login-link" href="#login">Login</a>
-          <a className="register-link" href="#register">Register</a>
+          <Link className="login-link" to="/login">Login</Link>
+          <Link className="register-link" to="/register">Register</Link>
         </div>
         <button
           className="menu-button"
@@ -139,8 +140,8 @@ function Index() {
             <a href="#journey" onClick={() => setMenuOpen(false)}>EasyApps</a>
             <a href="#about" onClick={() => setMenuOpen(false)}>About</a>
             <a href="#help" onClick={() => setMenuOpen(false)}>Support</a>
-            <a href="#login" onClick={() => setMenuOpen(false)}>Login</a>
-            <a className="register-link" href="#register" onClick={() => setMenuOpen(false)}>Register</a>
+            <Link to="/login" onClick={() => setMenuOpen(false)}>Login</Link>
+            <Link className="register-link" to="/register" onClick={() => setMenuOpen(false)}>Register</Link>
           </nav>
         )}
       </header>
