@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Calculator, Eye, EyeOff, LockKeyhole, TrendingUp } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { brokerPartners } from "@/lib/broker-partners";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -16,12 +17,12 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [message, setMessage] = useState("");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("Sign-in is not connected yet. Your details have not been sent.");
+    void navigate({ to: "/dashboard-demo" });
   }
 
   return (
@@ -53,10 +54,31 @@ function Login() {
             Log in to your account
           </h1>
           <p className="mt-3 text-base leading-7 text-muted-foreground">
-            Pick up where you left off and keep building your investment journey.
+            Choose a company, then enter your login details.
           </p>
 
           <form className="mt-9 space-y-5" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <label htmlFor="company" className="text-sm font-bold text-foreground">
+                Choose a company
+              </label>
+              <select
+                id="company"
+                name="company"
+                defaultValue=""
+                className="h-12 w-full rounded-lg border border-input bg-card px-4 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <option value="" disabled>
+                  Select the company you want to log in to
+                </option>
+                {brokerPartners.map((partner) => (
+                  <option key={partner.name} value={partner.name}>
+                    {partner.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-bold text-foreground">
                 Email address
@@ -64,10 +86,10 @@ function Login() {
               <input
                 id="email"
                 name="email"
-                type="email"
+                type="text"
+                inputMode="email"
                 autoComplete="email"
                 placeholder="you@example.com"
-                required
                 className="h-12 w-full rounded-lg border border-input bg-card px-4 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary"
               />
             </div>
@@ -88,7 +110,6 @@ function Login() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="Enter your password"
-                  required
                   className="h-12 w-full rounded-lg border border-input bg-card px-4 pr-12 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary"
                 />
                 <button
@@ -107,6 +128,10 @@ function Login() {
               </div>
             </div>
 
+            <p className="text-xs leading-5 text-muted-foreground">
+              Prototype access: details are not checked, stored, or sent. Continue opens a preview
+              portfolio with fictional data.
+            </p>
             <button
               type="submit"
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-base font-extrabold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -114,14 +139,6 @@ function Login() {
               <LockKeyhole className="size-4" aria-hidden="true" />
               Log in
             </button>
-            {message && (
-              <p
-                role="status"
-                className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm leading-6 text-foreground"
-              >
-                {message}
-              </p>
-            )}
           </form>
 
           <p className="mt-8 text-center text-xs leading-5 text-muted-foreground">
@@ -133,6 +150,17 @@ function Login() {
               Create an account
             </Link>
           </p>
+          <div className="mt-8 border-t border-border pt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Explore the portfolio layout with clearly labeled sample data.
+            </p>
+            <Link
+              to="/dashboard-demo"
+              className="mt-3 inline-flex h-11 items-center justify-center rounded-lg border border-primary px-5 text-sm font-bold text-primary transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              Preview portfolio
+            </Link>
+          </div>
         </div>
       </section>
 

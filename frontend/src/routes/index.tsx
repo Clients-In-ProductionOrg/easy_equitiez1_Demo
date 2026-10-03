@@ -14,6 +14,8 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import heroImage from "@/assets/investing-app-hero.jpg";
 import helpImage from "@/assets/help-investor.jpg";
+import { brokerPartners } from "@/lib/broker-partners";
+import { listedCompanies } from "@/lib/listed-companies";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -69,6 +71,8 @@ const legalLinks = [
   "Access to Info Manual",
   "Cost Profile",
 ];
+
+const investmentOptions = [...brokerPartners, ...listedCompanies];
 
 function BrandLogo({ compact = false }: { compact?: boolean }) {
   return (
@@ -170,6 +174,51 @@ function Index() {
               <p>{card.body}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="partners-heading" className="border-y border-border bg-card py-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto mb-10 max-w-2xl px-6 text-center sm:px-10">
+            <p className="mb-3 text-sm font-extrabold uppercase tracking-[0.18em] text-primary">
+              Invest with confidence
+            </p>
+            <h2 id="partners-heading" className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Investment partners &amp; popular companies
+            </h2>
+            <p className="mt-3 text-base leading-7 text-muted-foreground">
+              Explore the platforms and companies available to investors.
+            </p>
+          </div>
+          <div className="partner-marquee-viewport">
+            <div className="partner-marquee-track">
+              {[0, 1].map((copy) => (
+                <ul
+                  key={copy}
+                  aria-hidden={copy === 1}
+                  className="partner-marquee-group"
+                >
+                  {investmentOptions.map((option) => (
+                    <li className="partner-marquee-card" key={option.name}>
+                      {option.logo ? (
+                        <img
+                          src={option.logo}
+                          alt={"logoAlt" in option ? option.logoAlt : `${option.name} logo`}
+                          loading="lazy"
+                          className="partner-marquee-logo"
+                        />
+                      ) : (
+                        <span aria-hidden="true" className="partner-marquee-wordmark">
+                          {option.name}
+                        </span>
+                      )}
+                      <span className="partner-marquee-name">{option.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
