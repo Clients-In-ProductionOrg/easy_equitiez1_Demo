@@ -116,7 +116,7 @@ function Index() {
           <BrandLogo />
         </a>
         <nav className="desktop-nav" aria-label="Main navigation">
-          <a href="#journey">Get Started <ChevronDown /></a>
+          <Link to="/register">Get Started <ChevronDown /></Link>
           <a href="#journey">Invest <ChevronDown /></a>
           <a href="#help">Resources <ChevronDown /></a>
           <a href="#journey"><Grid3X3 className="apps-icon" /> EasyApps <ChevronDown /></a>
@@ -138,7 +138,7 @@ function Index() {
         </button>
         {menuOpen && (
           <nav className="mobile-nav" aria-label="Mobile navigation">
-            <a href="#journey" onClick={() => setMenuOpen(false)}>Get Started</a>
+            <Link to="/register" onClick={() => setMenuOpen(false)}>Get Started</Link>
             <a href="#journey" onClick={() => setMenuOpen(false)}>Invest</a>
             <a href="#help" onClick={() => setMenuOpen(false)}>Resources</a>
             <a href="#journey" onClick={() => setMenuOpen(false)}>EasyApps</a>

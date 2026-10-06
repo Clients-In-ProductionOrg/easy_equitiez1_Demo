@@ -11,36 +11,50 @@ import {
   Wallet,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Portfolio preview | EasyEquities" },
+      { title: "Portfolio | EasyEquities" },
       {
         name: "description",
-        content:
-          "Preview the EasyEquities portfolio interface with clearly identified sample data.",
+        content: "View your EasyEquities investment portfolio and account activity.",
       },
     ],
   }),
-  component: DashboardDemo,
+  component: Dashboard,
 });
 
 const holdings = [
-  { name: "Global Equity Fund", ticker: "SAMPLE · ETF", value: "R 62,180.00", change: "+4.8%" },
-  { name: "Balanced Growth Fund", ticker: "SAMPLE · FUND", value: "R 41,520.00", change: "+3.2%" },
+  { name: "Global Equity Fund", ticker: "ETF", value: "R 62,180.00", change: "+4.8%" },
+  { name: "Balanced Growth Fund", ticker: "FUND", value: "R 41,520.00", change: "+3.2%" },
   {
     name: "Local Bond Fund",
-    ticker: "SAMPLE · BOND",
+    ticker: "BOND",
     value: "R 24,750.00",
     change: "+1.1%",
   },
 ];
 
 const activity = [
-  { title: "Monthly contribution", date: "Sample activity · 24 Sep", amount: "+R 1,000.00" },
-  { title: "Fund purchase", date: "Sample activity · 18 Sep", amount: "−R 500.00" },
-  { title: "Investment distribution", date: "Sample activity · 12 Sep", amount: "+R 86.40" },
+  { title: "Monthly contribution", date: "24 Sep", amount: "+R 1,000.00" },
+  { title: "Fund purchase", date: "18 Sep", amount: "−R 500.00" },
+  { title: "Investment distribution", date: "12 Sep", amount: "+R 86.40" },
+];
+
+const dashboardMenuItems = [
+  "Dashboard",
+  "Finances",
+  "Rewards Hub",
+  "Analytics & Education",
+  "Help Center",
+  "Profile settings",
 ];
 
 const initialChartValues = Array.from(
@@ -48,7 +62,7 @@ const initialChartValues = Array.from(
   (_, index) => 50 + index * 0.7 + Math.sin(index * 0.6) * 4 + Math.sin(index * 0.18) * 6,
 );
 
-function DashboardDemo() {
+function Dashboard() {
   const [notice, setNotice] = useState("");
   const [chartValues, setChartValues] = useState(initialChartValues);
 
@@ -109,13 +123,41 @@ function DashboardDemo() {
           </Link>
 
           <nav aria-label="Portfolio navigation" className="flex items-center gap-2 sm:gap-4">
-            <a
-              href="#portfolio"
-              className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
-            >
-              <LayoutDashboard className="size-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Portfolio</span>
-            </a>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Open portfolio menu"
+                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+                >
+                  <LayoutDashboard className="size-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Portfolio</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {dashboardMenuItems.map((item) =>
+                  item === "Finances" ||
+                  item === "Rewards Hub" ||
+                  item === "Analytics & Education" ? (
+                    <DropdownMenuItem key={item} asChild>
+                      <Link
+                        to={
+                          item === "Finances"
+                            ? "/finances"
+                            : item === "Rewards Hub"
+                              ? "/rewards-hub"
+                              : "/analytics-education"
+                        }
+                      >
+                        {item}
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem key={item}>{item}</DropdownMenuItem>
+                  ),
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <a
               href="#activity"
               className="rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
@@ -143,7 +185,7 @@ function DashboardDemo() {
           <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-primary">
-                Investment account
+                Portfolio
               </p>
               <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">My portfolio</h1>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -152,7 +194,7 @@ function DashboardDemo() {
             </div>
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">
               <Eye className="size-4" aria-hidden="true" />
-              Preview account
+              Investment account
             </span>
           </div>
 
@@ -184,31 +226,22 @@ function DashboardDemo() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-extrabold">Portfolio performance</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Simulated portfolio movement</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Portfolio value over time</p>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setNotice(
-                        "Transfers are unavailable: this preview is not connected to an account.",
-                      )
-                    }
+                  <Link
+                    to="/finances"
                     className="inline-flex h-10 items-center gap-2 rounded-lg border border-input bg-card px-3 text-sm font-bold transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
-                    Add money
-                  </button>
+                    Add funds
+                  </Link>
                   <button
                     type="button"
-                    onClick={() =>
-                      setNotice(
-                        "Orders are unavailable: this preview is not connected to a broker.",
-                      )
-                    }
+                    onClick={() => setNotice("Withdrawals are currently unavailable.")}
                     className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     <Plus className="size-4" aria-hidden="true" />
-                    Invest
+                    Withdraw funds
                   </button>
                 </div>
               </div>
@@ -217,7 +250,7 @@ function DashboardDemo() {
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Sample portfolio value
+                      Portfolio value
                     </p>
                     <p className="mt-1 font-mono text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
                       R{" "}
@@ -232,14 +265,14 @@ function DashboardDemo() {
                       aria-hidden="true"
                       className="chart-live-dot size-2 rounded-full bg-emerald-500"
                     />
-                    LIVE CHART
+                    Portfolio performance
                   </span>
                 </div>
                 <div className="mt-4 rounded-lg bg-muted/35 px-1 pt-2">
                   <svg
                     viewBox="0 0 760 250"
                     role="img"
-                    aria-label="Animated portfolio preview chart with South African rand values on the vertical axis and time in seconds on the horizontal axis. Values are simulated, not live market data."
+                    aria-label="Portfolio performance chart with South African rand values on the vertical axis and time in seconds on the horizontal axis."
                     className="h-56 w-full text-muted-foreground"
                     preserveAspectRatio="none"
                   >
@@ -307,12 +340,8 @@ function DashboardDemo() {
                 </div>
                 <div className="mt-2 flex justify-between text-xs font-medium text-muted-foreground">
                   <span>Elapsed time</span>
-                  <span>Sample portfolio value (ZAR)</span>
+                  <span>Portfolio value (ZAR)</span>
                 </div>
-                <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                  Simulated movement for preview only. This is not a live price feed or account
-                  balance.
-                </p>
               </div>
             </section>
 
@@ -340,9 +369,6 @@ function DashboardDemo() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                Investment names and figures are illustrative preview data, not live holdings.
-              </p>
             </section>
           </div>
 
@@ -353,9 +379,7 @@ function DashboardDemo() {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-extrabold">Recent activity</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Latest account activity · Preview data
-                </p>
+                <p className="mt-1 text-sm text-muted-foreground">Latest account activity</p>
               </div>
               <CircleHelp className="size-5 text-muted-foreground" aria-hidden="true" />
             </div>

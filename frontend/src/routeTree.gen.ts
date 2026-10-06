@@ -10,18 +10,39 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnalyticsEducationRouteImport } from './routes/analytics-education'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as EventsCalendarRouteImport } from './routes/events-calendar'
+import { Route as FinancesRouteImport } from './routes/finances'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RewardsHubRouteImport } from './routes/rewards-hub'
+import { Route as StocksCalendarRouteImport } from './routes/stocks-calendar'
+import { Route as VpsServiceRouteImport } from './routes/vps-service'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalyticsEducationRoute = AnalyticsEducationRouteImport.update({
+  id: '/analytics-education',
+  path: '/analytics-education',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsCalendarRoute = EventsCalendarRouteImport.update({
+  id: '/events-calendar',
+  path: '/events-calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinancesRoute = FinancesRouteImport.update({
+  id: '/finances',
+  path: '/finances',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -34,39 +55,109 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RewardsHubRoute = RewardsHubRouteImport.update({
+  id: '/rewards-hub',
+  path: '/rewards-hub',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StocksCalendarRoute = StocksCalendarRouteImport.update({
+  id: '/stocks-calendar',
+  path: '/stocks-calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VpsServiceRoute = VpsServiceRouteImport.update({
+  id: '/vps-service',
+  path: '/vps-service',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics-education': typeof AnalyticsEducationRoute
   '/dashboard': typeof DashboardRoute
+  '/events-calendar': typeof EventsCalendarRoute
+  '/finances': typeof FinancesRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/rewards-hub': typeof RewardsHubRoute
+  '/stocks-calendar': typeof StocksCalendarRoute
+  '/vps-service': typeof VpsServiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics-education': typeof AnalyticsEducationRoute
   '/dashboard': typeof DashboardRoute
+  '/events-calendar': typeof EventsCalendarRoute
+  '/finances': typeof FinancesRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/rewards-hub': typeof RewardsHubRoute
+  '/stocks-calendar': typeof StocksCalendarRoute
+  '/vps-service': typeof VpsServiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics-education': typeof AnalyticsEducationRoute
   '/dashboard': typeof DashboardRoute
+  '/events-calendar': typeof EventsCalendarRoute
+  '/finances': typeof FinancesRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/rewards-hub': typeof RewardsHubRoute
+  '/stocks-calendar': typeof StocksCalendarRoute
+  '/vps-service': typeof VpsServiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/register'
+  fullPaths:
+    | '/'
+    | '/analytics-education'
+    | '/dashboard'
+    | '/events-calendar'
+    | '/finances'
+    | '/login'
+    | '/register'
+    | '/rewards-hub'
+    | '/stocks-calendar'
+    | '/vps-service'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/register'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/register'
+  to:
+    | '/'
+    | '/analytics-education'
+    | '/dashboard'
+    | '/events-calendar'
+    | '/finances'
+    | '/login'
+    | '/register'
+    | '/rewards-hub'
+    | '/stocks-calendar'
+    | '/vps-service'
+  id:
+    | '__root__'
+    | '/'
+    | '/analytics-education'
+    | '/dashboard'
+    | '/events-calendar'
+    | '/finances'
+    | '/login'
+    | '/register'
+    | '/rewards-hub'
+    | '/stocks-calendar'
+    | '/vps-service'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsEducationRoute: typeof AnalyticsEducationRoute
   DashboardRoute: typeof DashboardRoute
+  EventsCalendarRoute: typeof EventsCalendarRoute
+  FinancesRoute: typeof FinancesRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  RewardsHubRoute: typeof RewardsHubRoute
+  StocksCalendarRoute: typeof StocksCalendarRoute
+  VpsServiceRoute: typeof VpsServiceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -78,11 +169,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analytics-education': {
+      id: '/analytics-education'
+      path: '/analytics-education'
+      fullPath: '/analytics-education'
+      preLoaderRoute: typeof AnalyticsEducationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events-calendar': {
+      id: '/events-calendar'
+      path: '/events-calendar'
+      fullPath: '/events-calendar'
+      preLoaderRoute: typeof EventsCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finances': {
+      id: '/finances'
+      path: '/finances'
+      fullPath: '/finances'
+      preLoaderRoute: typeof FinancesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -99,14 +211,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rewards-hub': {
+      id: '/rewards-hub'
+      path: '/rewards-hub'
+      fullPath: '/rewards-hub'
+      preLoaderRoute: typeof RewardsHubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stocks-calendar': {
+      id: '/stocks-calendar'
+      path: '/stocks-calendar'
+      fullPath: '/stocks-calendar'
+      preLoaderRoute: typeof StocksCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vps-service': {
+      id: '/vps-service'
+      path: '/vps-service'
+      fullPath: '/vps-service'
+      preLoaderRoute: typeof VpsServiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsEducationRoute: AnalyticsEducationRoute,
   DashboardRoute: DashboardRoute,
+  EventsCalendarRoute: EventsCalendarRoute,
+  FinancesRoute: FinancesRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  RewardsHubRoute: RewardsHubRoute,
+  StocksCalendarRoute: StocksCalendarRoute,
+  VpsServiceRoute: VpsServiceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -128,10 +128,6 @@ function Login() {
               </div>
             </div>
 
-            <p className="text-xs leading-5 text-muted-foreground">
-              Prototype access: details are not checked, stored, or sent. Continue opens a preview
-              portfolio with fictional data.
-            </p>
             <button
               type="submit"
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-base font-extrabold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -150,17 +146,6 @@ function Login() {
               Create an account
             </Link>
           </p>
-          <div className="mt-8 border-t border-border pt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Explore the portfolio layout with clearly labeled sample data.
-            </p>
-            <Link
-              to="/dashboard"
-              className="mt-3 inline-flex h-11 items-center justify-center rounded-lg border border-primary px-5 text-sm font-bold text-primary transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              Preview portfolio
-            </Link>
-          </div>
         </div>
       </section>
 
