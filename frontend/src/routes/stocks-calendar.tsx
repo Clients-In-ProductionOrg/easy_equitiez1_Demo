@@ -227,7 +227,9 @@ function StocksCalendar() {
                   item === "Dashboard" ||
                   item === "Finances" ||
                   item === "Rewards Hub" ||
-                  item === "Analytics & Education" ? (
+                  item === "Analytics & Education" ||
+                  item === "Help Center" ||
+                  item === "Profile settings" ? (
                     <DropdownMenuItem key={item} asChild>
                       <Link
                         to={
@@ -237,7 +239,11 @@ function StocksCalendar() {
                               ? "/finances"
                               : item === "Rewards Hub"
                                 ? "/rewards-hub"
-                                : "/analytics-education"
+                                : item === "Analytics & Education"
+                                  ? "/analytics-education"
+                                  : item === "Help Center"
+                                    ? "/help-center"
+                                    : "/profile-settings"
                         }
                       >
                         {item}
@@ -377,10 +383,6 @@ function StocksCalendar() {
                 </p>
               )}
             </div>
-
-            <p className="border-t border-border px-5 py-3 text-xs leading-5 text-muted-foreground">
-              Dividend dates and amounts are provided schedule information and may change.
-            </p>
           </section>
         </section>
       </div>

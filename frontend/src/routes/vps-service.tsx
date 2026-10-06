@@ -70,7 +70,9 @@ function VpsService() {
                   item === "Dashboard" ||
                   item === "Finances" ||
                   item === "Rewards Hub" ||
-                  item === "Analytics & Education" ? (
+                  item === "Analytics & Education" ||
+                  item === "Help Center" ||
+                  item === "Profile settings" ? (
                     <DropdownMenuItem key={item} asChild>
                       <Link
                         to={
@@ -80,7 +82,11 @@ function VpsService() {
                               ? "/finances"
                               : item === "Rewards Hub"
                                 ? "/rewards-hub"
-                                : "/analytics-education"
+                                : item === "Analytics & Education"
+                                  ? "/analytics-education"
+                                  : item === "Help Center"
+                                    ? "/help-center"
+                                    : "/profile-settings"
                         }
                       >
                         {item}

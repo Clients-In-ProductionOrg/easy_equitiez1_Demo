@@ -14,7 +14,9 @@ import { Route as AnalyticsEducationRouteImport } from './routes/analytics-educa
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as EventsCalendarRouteImport } from './routes/events-calendar'
 import { Route as FinancesRouteImport } from './routes/finances'
+import { Route as HelpCenterRouteImport } from './routes/help-center'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ProfileSettingsRouteImport } from './routes/profile-settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RewardsHubRouteImport } from './routes/rewards-hub'
 import { Route as StocksCalendarRouteImport } from './routes/stocks-calendar'
@@ -45,9 +47,19 @@ const FinancesRoute = FinancesRouteImport.update({
   path: '/finances',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HelpCenterRoute = HelpCenterRouteImport.update({
+  id: '/help-center',
+  path: '/help-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileSettingsRoute = ProfileSettingsRouteImport.update({
+  id: '/profile-settings',
+  path: '/profile-settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -77,7 +89,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/events-calendar': typeof EventsCalendarRoute
   '/finances': typeof FinancesRoute
+  '/help-center': typeof HelpCenterRoute
   '/login': typeof LoginRoute
+  '/profile-settings': typeof ProfileSettingsRoute
   '/register': typeof RegisterRoute
   '/rewards-hub': typeof RewardsHubRoute
   '/stocks-calendar': typeof StocksCalendarRoute
@@ -89,7 +103,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/events-calendar': typeof EventsCalendarRoute
   '/finances': typeof FinancesRoute
+  '/help-center': typeof HelpCenterRoute
   '/login': typeof LoginRoute
+  '/profile-settings': typeof ProfileSettingsRoute
   '/register': typeof RegisterRoute
   '/rewards-hub': typeof RewardsHubRoute
   '/stocks-calendar': typeof StocksCalendarRoute
@@ -102,7 +118,9 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/events-calendar': typeof EventsCalendarRoute
   '/finances': typeof FinancesRoute
+  '/help-center': typeof HelpCenterRoute
   '/login': typeof LoginRoute
+  '/profile-settings': typeof ProfileSettingsRoute
   '/register': typeof RegisterRoute
   '/rewards-hub': typeof RewardsHubRoute
   '/stocks-calendar': typeof StocksCalendarRoute
@@ -116,7 +134,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events-calendar'
     | '/finances'
+    | '/help-center'
     | '/login'
+    | '/profile-settings'
     | '/register'
     | '/rewards-hub'
     | '/stocks-calendar'
@@ -128,7 +148,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events-calendar'
     | '/finances'
+    | '/help-center'
     | '/login'
+    | '/profile-settings'
     | '/register'
     | '/rewards-hub'
     | '/stocks-calendar'
@@ -140,7 +162,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events-calendar'
     | '/finances'
+    | '/help-center'
     | '/login'
+    | '/profile-settings'
     | '/register'
     | '/rewards-hub'
     | '/stocks-calendar'
@@ -153,7 +177,9 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   EventsCalendarRoute: typeof EventsCalendarRoute
   FinancesRoute: typeof FinancesRoute
+  HelpCenterRoute: typeof HelpCenterRoute
   LoginRoute: typeof LoginRoute
+  ProfileSettingsRoute: typeof ProfileSettingsRoute
   RegisterRoute: typeof RegisterRoute
   RewardsHubRoute: typeof RewardsHubRoute
   StocksCalendarRoute: typeof StocksCalendarRoute
@@ -197,11 +223,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinancesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/help-center': {
+      id: '/help-center'
+      path: '/help-center'
+      fullPath: '/help-center'
+      preLoaderRoute: typeof HelpCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile-settings': {
+      id: '/profile-settings'
+      path: '/profile-settings'
+      fullPath: '/profile-settings'
+      preLoaderRoute: typeof ProfileSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -241,7 +281,9 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   EventsCalendarRoute: EventsCalendarRoute,
   FinancesRoute: FinancesRoute,
+  HelpCenterRoute: HelpCenterRoute,
   LoginRoute: LoginRoute,
+  ProfileSettingsRoute: ProfileSettingsRoute,
   RegisterRoute: RegisterRoute,
   RewardsHubRoute: RewardsHubRoute,
   StocksCalendarRoute: StocksCalendarRoute,
