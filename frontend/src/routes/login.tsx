@@ -22,7 +22,7 @@ function Login() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void navigate({ to: "/dashboard-demo" });
+    void navigate({ to: "/dashboard" });
   }
 
   return (
@@ -155,7 +155,7 @@ function Login() {
               Explore the portfolio layout with clearly labeled sample data.
             </p>
             <Link
-              to="/dashboard-demo"
+              to="/dashboard"
               className="mt-3 inline-flex h-11 items-center justify-center rounded-lg border border-primary px-5 text-sm font-bold text-primary transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               Preview portfolio

@@ -10,9 +10,9 @@ import {
   Plus,
   Wallet,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export const Route = createFileRoute("/dashboard-demo")({
+export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Portfolio preview | EasyEquities" },
@@ -43,8 +43,56 @@ const activity = [
   { title: "Investment distribution", date: "Sample activity · 12 Sep", amount: "+R 86.40" },
 ];
 
+const initialChartValues = Array.from(
+  { length: 36 },
+  (_, index) => 50 + index * 0.7 + Math.sin(index * 0.6) * 4 + Math.sin(index * 0.18) * 6,
+);
+
 function DashboardDemo() {
   const [notice, setNotice] = useState("");
+  const [chartValues, setChartValues] = useState(initialChartValues);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let tick = 0;
+    const interval = window.setInterval(() => {
+      tick += 1;
+      setChartValues((values) => {
+        const previous = values[values.length - 1];
+        const next = previous + Math.sin(tick * 1.7) * 1.1 + Math.cos(tick * 0.63) * 0.7;
+        return [...values.slice(1), next];
+      });
+    }, 900);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const chartMin = Math.min(...chartValues) - 5;
+  const chartMax = Math.max(...chartValues) + 5;
+  const chartPoints = chartValues.map((value, index) => ({
+    x: 76 + (index / (chartValues.length - 1)) * 650,
+    y: 28 + (1 - (value - chartMin) / (chartMax - chartMin)) * 176,
+  }));
+  const chartPath = chartPoints
+    .map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
+    .join(" ");
+  const chartAreaPath = `${chartPath} L726 210 L76 210 Z`;
+  const finalPoint = chartPoints[chartPoints.length - 1];
+  const yAxisTicks = [0, 1, 2, 3].map((tick) => {
+    const ratio = tick / 3;
+    const value = chartMax - ratio * (chartMax - chartMin);
+    const portfolioValue = 128450.75 + (value - chartValues[chartValues.length - 1]) * 12;
+
+    return {
+      y: 28 + ratio * 176,
+      label: `R${Math.round(portfolioValue / 1000)}k`,
+    };
+  });
+  const xAxisTicks = ["60s", "45s", "30s", "15s", "Now"];
+  const displayedValue =
+    128450.75 +
+    (chartValues[chartValues.length - 1] - initialChartValues[initialChartValues.length - 1]) * 12;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -136,9 +184,7 @@ function DashboardDemo() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-extrabold">Portfolio performance</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Value over time · Preview data
-                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">Simulated portfolio movement</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -167,33 +213,106 @@ function DashboardDemo() {
                 </div>
               </div>
 
-              <div className="mt-6 rounded-xl bg-muted/50 p-3 sm:p-5">
-                <svg
-                  viewBox="0 0 720 240"
-                  role="img"
-                  aria-label="Illustrative fictional portfolio trend line"
-                  className="h-52 w-full overflow-visible"
-                  preserveAspectRatio="none"
-                >
-                  <path
-                    d="M0 205H720M0 155H720M0 105H720M0 55H720"
-                    stroke="currentColor"
-                    strokeOpacity=".12"
-                  />
-                  <path
-                    d="M0 190 C48 172 62 182 98 158 S154 162 195 142 S242 151 282 123 S340 141 378 111 S428 127 468 92 S520 112 560 77 S615 87 650 55 S690 66 720 28"
-                    fill="none"
-                    stroke="var(--primary)"
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                  />
-                  <circle cx="720" cy="28" r="7" fill="var(--primary)" />
-                </svg>
-                <div className="mt-2 flex justify-between text-xs font-medium text-muted-foreground">
-                  <span>Jan</span>
-                  <span>Jun</span>
-                  <span>Dec</span>
+              <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card p-4 sm:p-5">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Sample portfolio value
+                    </p>
+                    <p className="mt-1 font-mono text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
+                      R{" "}
+                      {displayedValue.toLocaleString("en-ZA", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800">
+                    <span
+                      aria-hidden="true"
+                      className="chart-live-dot size-2 rounded-full bg-emerald-500"
+                    />
+                    LIVE CHART
+                  </span>
                 </div>
+                <div className="mt-4 rounded-lg bg-muted/35 px-1 pt-2">
+                  <svg
+                    viewBox="0 0 760 250"
+                    role="img"
+                    aria-label="Animated portfolio preview chart with South African rand values on the vertical axis and time in seconds on the horizontal axis. Values are simulated, not live market data."
+                    className="h-56 w-full text-muted-foreground"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id="portfolio-area-fill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="var(--primary)" stopOpacity=".2" />
+                        <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    {yAxisTicks.map((tick) => (
+                      <g key={tick.y}>
+                        <path
+                          d={`M70 ${tick.y}H738`}
+                          stroke="currentColor"
+                          strokeOpacity=".14"
+                          strokeDasharray="3 7"
+                        />
+                        <text
+                          x="3"
+                          y={tick.y + 4}
+                          fill="currentColor"
+                          fontSize="11"
+                          fontWeight="600"
+                        >
+                          {tick.label}
+                        </text>
+                      </g>
+                    ))}
+                    <path d={chartAreaPath} fill="url(#portfolio-area-fill)" />
+                    <path
+                      d={chartPath}
+                      fill="none"
+                      stroke="var(--primary)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {xAxisTicks.map((tick, index) => {
+                      const x = 76 + (index / (xAxisTicks.length - 1)) * 650;
+                      return (
+                        <g key={tick}>
+                          <path d={`M${x} 210V215`} stroke="currentColor" strokeOpacity=".4" />
+                          <text
+                            x={x}
+                            y="235"
+                            fill="currentColor"
+                            fontSize="11"
+                            fontWeight="600"
+                            textAnchor="middle"
+                          >
+                            {tick}
+                          </text>
+                        </g>
+                      );
+                    })}
+                    <circle
+                      cx={finalPoint.x}
+                      cy={finalPoint.y}
+                      r="4"
+                      fill="var(--primary)"
+                      stroke="white"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                </div>
+                <div className="mt-2 flex justify-between text-xs font-medium text-muted-foreground">
+                  <span>Elapsed time</span>
+                  <span>Sample portfolio value (ZAR)</span>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                  Simulated movement for preview only. This is not a live price feed or account
+                  balance.
+                </p>
               </div>
             </section>
 
