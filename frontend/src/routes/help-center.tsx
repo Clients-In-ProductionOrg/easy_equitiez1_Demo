@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, Bot, ChevronRight, LayoutDashboard, LogOut, Send, Wallet } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { Bell, Bot, LayoutDashboard, LogOut, Send, Wallet } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { getUserSessionToken } from "@/lib/manual-account-data";
+import { mayaChatServerFn } from "@/lib/maya-server";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,75 +39,117 @@ type ChatMessage = {
   id: number;
   sender: "maya" | "visitor";
   text: string;
-  link?: { label: string; href: string };
 };
 
-function getMayaReply(message: string): Omit<ChatMessage, "id" | "sender"> {
-  const query = message.toLowerCase();
+const SUPPORT_EMAIL = "accounts@easyequities-sa.co.za";
+const MAX_INPUT_LENGTH = 1000;
+const FALLBACK_REPLY = `I'm having trouble answering right now. Please try again in a moment, or email ${SUPPORT_EMAIL} and our team will help.`;
+const RATE_LIMIT_REPLY =
+  "You're sending messages quickly. Please wait a few minutes and try again.";
 
-  if (query.includes("deposit") || query.includes("withdraw") || query.includes("finance")) {
-    return {
-      text: "You can find deposit and withdrawal options in Finances.",
-      link: { label: "Open Finances", href: "/finances" },
-    };
-  }
+const pageLinks = {
+  "/dashboard": "/dashboard",
+  "/finances": "/finances",
+  "/rewards-hub": "/rewards-hub",
+  "/vps-service": "/vps-service",
+  "/analytics-education": "/analytics-education",
+  "/events-calendar": "/events-calendar",
+  "/stocks-calendar": "/stocks-calendar",
+  "/profile-settings": "/profile-settings",
+  "/help-center": "/help-center",
+  "/login": "/login",
+} as const;
 
-  if (query.includes("vps") || query.includes("server") || query.includes("reward")) {
-    return {
-      text: "VPS service information is available in Rewards Hub.",
-      link: { label: "Open Rewards Hub", href: "/rewards-hub" },
-    };
-  }
-
-  if (
-    query.includes("learn") ||
-    query.includes("course") ||
-    query.includes("calendar") ||
-    query.includes("education")
-  ) {
-    return {
-      text: "Explore courses and market calendars in Analytics & Education.",
-      link: { label: "Open Analytics & Education", href: "/analytics-education" },
-    };
-  }
-
-  if (query.includes("profile") || query.includes("password") || query.includes("email")) {
-    return {
-      text: "Profile and security preferences are grouped in Profile settings.",
-      link: { label: "Open Profile settings", href: "/profile-settings" },
-    };
-  }
-
-  if (query.includes("portfolio") || query.includes("dashboard") || query.includes("balance")) {
-    return {
-      text: "Your portfolio overview is available from the dashboard.",
-      link: { label: "Open Dashboard", href: "/dashboard" },
-    };
-  }
-
-  return {
-    text: "I can help you find Finances, Rewards Hub, Analytics & Education, Profile settings, or your Dashboard. What would you like to open?",
-  };
+function renderMessageText(text: string) {
+  const parts = text.split(/(\/[a-z-]+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+)/g);
+  return parts.map((part, index) => {
+    const route = pageLinks[part as keyof typeof pageLinks];
+    if (route) {
+      return (
+        <Link
+          key={index}
+          to={route}
+          className="font-bold text-primary underline underline-offset-2"
+        >
+          {part}
+        </Link>
+      );
+    }
+    if (/^[\w.+-]+@[\w-]+(?:\.[\w-]+)+$/.test(part)) {
+      return (
+        <a
+          key={index}
+          href={`mailto:${part}`}
+          className="font-bold text-primary underline underline-offset-2"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
 }
 
 function HelpCenter() {
   const [chatOpen, setChatOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    let cancelled = false;
+    const sessionToken = getUserSessionToken();
+    if (!sessionToken) return;
+    void mayaChatServerFn({ data: { sessionToken, messages: [] } })
+      .then((result) => {
+        if (!cancelled) setUserName(result.name);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [messages, isSending]);
+
+  const greeting = userName
+    ? `Hello, ${userName}! 👋 I'm Maya, your AI assistant. How can I help you with your account today?`
+    : "Hello there! 👋 I'm Maya, your AI assistant. Ask me about your dashboard, finances, rewards, learning resources or profile settings.";
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const text = draft.trim();
-    if (!text) return;
+    const text = draft.trim().slice(0, MAX_INPUT_LENGTH);
+    if (!text || isSending) return;
 
     const nextId = messages.length;
-    const reply = getMayaReply(text);
-    setMessages((current) => [
-      ...current,
-      { id: nextId, sender: "visitor", text },
-      { id: nextId + 1, sender: "maya", ...reply },
-    ]);
+    const history = [...messages, { id: nextId, sender: "visitor" as const, text }];
+    setMessages(history);
     setDraft("");
+    setIsSending(true);
+
+    let replyText = FALLBACK_REPLY;
+    try {
+      const result = await mayaChatServerFn({
+        data: {
+          sessionToken: getUserSessionToken(),
+          messages: history.slice(-20).map((message) => ({
+            role: message.sender === "visitor" ? ("user" as const) : ("assistant" as const),
+            content: message.text,
+          })),
+        },
+      });
+      if (result.reply) replyText = result.reply;
+      else if (result.error === "rate_limited") replyText = RATE_LIMIT_REPLY;
+    } catch (error) {
+      console.error("Maya could not respond.", error);
+    } finally {
+      setMessages((current) => [...current, { id: nextId + 1, sender: "maya", text: replyText }]);
+      setIsSending(false);
+    }
   }
 
   return (
@@ -221,22 +265,18 @@ function HelpCenter() {
                   referrerPolicy="no-referrer"
                 />
                 <div className="mx-auto mt-7 max-w-lg rounded-2xl bg-muted/60 p-5 text-left">
-                  <p className="text-lg font-bold">Hello there! 👋</p>
+                  <p className="text-lg font-bold">
+                    {userName ? `Hello, ${userName}! 👋` : "Hello there! 👋"}
+                  </p>
                   <p className="mt-2 leading-7 text-muted-foreground">
-                    Have any questions? Feel free to send us a message — we’re here and happy to
-                    help!
+                    I&apos;m Maya, your AI assistant. Have any questions about the site or your
+                    account? Send me a message — I&apos;m happy to help!
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    setMessages([
-                      {
-                        id: 0,
-                        sender: "maya",
-                        text: "Hi! I’m Maya. Ask me about your dashboard, finances, VPS service, learning resources, or profile settings.",
-                      },
-                    ]);
+                    setMessages([{ id: 0, sender: "maya", text: greeting }]);
                     setChatOpen(true);
                   }}
                   className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-8 text-base font-extrabold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -273,19 +313,29 @@ function HelpCenter() {
                             : "bg-muted"
                         }`}
                       >
-                        <p>{message.text}</p>
-                        {message.link && (
-                          <Link
-                            to={message.link.href}
-                            className="mt-2 inline-flex items-center gap-1 font-bold text-primary underline underline-offset-2"
-                          >
-                            {message.link.label}
-                            <ChevronRight className="size-4" aria-hidden="true" />
-                          </Link>
-                        )}
+                        <p className="whitespace-pre-wrap break-words">
+                          {message.sender === "maya"
+                            ? renderMessageText(message.text)
+                            : message.text}
+                        </p>
                       </div>
                     </div>
                   ))}
+                  {isSending && (
+                    <div className="flex items-center gap-3" role="status">
+                      <img
+                        src={mayaAvatar}
+                        alt=""
+                        aria-hidden="true"
+                        className="size-9 shrink-0 rounded-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">
+                        Maya is typing…
+                      </div>
+                    </div>
+                  )}
+                  <div ref={bottomRef} />
                 </div>
 
                 <form
@@ -299,13 +349,14 @@ function HelpCenter() {
                     id="help-message"
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
+                    maxLength={MAX_INPUT_LENGTH}
                     placeholder="Type your message..."
                     className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-background px-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   />
                   <button
                     type="submit"
                     aria-label="Send message"
-                    disabled={!draft.trim()}
+                    disabled={!draft.trim() || isSending}
                     className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Send className="size-4" aria-hidden="true" />

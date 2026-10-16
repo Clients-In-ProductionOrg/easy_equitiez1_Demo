@@ -8,6 +8,7 @@ import {
   ChevronDown,
   LayoutDashboard,
   LogOut,
+  Radio,
   Wallet,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -75,6 +76,39 @@ const events: CalendarEvent[] = [
   ["18:00", "CHN", "National Day", "—", "—", "—"],
   ["19:00", "USA", "3-Year Note Auction", "—", "—", "4.474%"],
   ["22:30", "USA", "API Weekly Crude Oil Stock", "—", "—", "1.019"],
+  ["00:30", "AUS", "Westpac Consumer Confidence (MoM)", "1.8%", "—", "-0.7%"],
+  ["01:00", "NZL", "Electronic Card Retail Sales (MoM)", "0.6%", "0.4%", "-0.2%"],
+  ["03:00", "CHN", "Caixin Services PMI", "51.8", "51.4", "51.6"],
+  ["06:00", "JPN", "Household Spending (YoY)", "-1.2%", "-0.8%", "0.5%"],
+  ["07:00", "DEU", "Industrial Production (MoM)", "0.4%", "0.2%", "-0.1%"],
+  ["07:00", "GBR", "Halifax House Price Index (MoM)", "0.3%", "0.2%", "0.1%"],
+  ["08:00", "CHE", "Foreign Currency Reserves", "724.6B", "—", "721.3B"],
+  ["09:30", "ZAF", "Gross Domestic Product (QoQ)", "0.6%", "0.5%", "0.4%"],
+  ["10:00", "ITA", "Retail Sales (MoM)", "0.2%", "0.1%", "-0.3%"],
+  ["12:00", "USA", "MBA Mortgage Applications", "-1.4%", "—", "2.1%"],
+  ["13:00", "USA", "NFIB Small Business Optimism", "98.7", "98.2", "97.9"],
+  ["14:30", "USA", "Core Consumer Price Index (MoM)", "0.3%", "0.2%", "0.3%"],
+  ["14:30", "USA", "Initial Jobless Claims", "221K", "225K", "228K"],
+  ["15:45", "USA", "S&P Global Services PMI", "52.8", "52.5", "52.3"],
+  ["16:00", "USA", "JOLTS Job Openings", "7.62M", "7.70M", "7.71M"],
+  ["17:30", "USA", "EIA Crude Oil Inventories", "-1.2M", "—", "3.5M"],
+  ["20:00", "USA", "Federal Reserve Beige Book", "—", "—", "—"],
+  ["00:01", "GBR", "BRC Retail Sales Monitor (YoY)", "1.2%", "1.0%", "0.8%"],
+  ["01:30", "AUS", "Building Permits (MoM)", "2.4%", "1.8%", "-0.9%"],
+  ["04:00", "JPN", "Leading Economic Index", "107.2", "106.8", "106.1"],
+  ["06:00", "JPN", "Coincident Index", "116.4", "—", "115.9"],
+  ["07:00", "DEU", "Trade Balance", "18.6B€", "17.9B€", "17.2B€"],
+  ["07:45", "FRA", "Trade Balance", "-7.4B€", "—", "-7.1B€"],
+  ["08:00", "NOR", "Consumer Price Index (YoY)", "3.1%", "3.0%", "3.2%"],
+  ["09:00", "ZAF", "Manufacturing Production (YoY)", "1.7%", "1.2%", "0.8%"],
+  ["09:30", "GBR", "S&P Global Services PMI", "52.7", "52.5", "51.8"],
+  ["10:00", "EMU", "ZEW Economic Sentiment", "18.4", "16.0", "14.2"],
+  ["11:00", "ITA", "Producer Price Index (MoM)", "0.2%", "—", "-0.4%"],
+  ["12:30", "USA", "Challenger Job Cuts (YoY)", "-8.1%", "—", "5.4%"],
+  ["14:30", "USA", "Continuing Jobless Claims", "1.87M", "1.89M", "1.91M"],
+  ["15:00", "CAN", "Ivey Employment Index", "54.1", "—", "52.8"],
+  ["16:30", "USA", "EIA Natural Gas Storage Change", "72B", "65B", "80B"],
+  ["21:00", "USA", "Consumer Credit Change", "12.4B$", "10.0B$", "7.8B$"],
 ];
 
 const menuItems = [
@@ -85,6 +119,13 @@ const menuItems = [
   "Help Center",
   "Profile settings",
 ];
+
+function getLocalDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 function getDailyValue(value: string, daySeed: string, eventIndex: number, columnIndex: number) {
   const match = /^(-?)(\d+(?:\.\d+)?)(.*)$/.exec(value);
@@ -105,6 +146,32 @@ function getDailyValue(value: string, daySeed: string, eventIndex: number, colum
   return `${sign}${Math.abs(adjustedValue).toFixed(decimals)}${suffix}`;
 }
 
+function getLiveMarketValue(
+  value: string,
+  daySeed: string,
+  eventIndex: number,
+  columnIndex: number,
+  tick: number,
+) {
+  const baseValue = getDailyValue(value, daySeed, eventIndex, columnIndex);
+  const match = /^(-?)(\d+(?:\.\d+)?)(.*)$/.exec(baseValue);
+  if (!match || tick === 0) return baseValue;
+
+  const [, sign, numericValue, suffix] = match;
+  const decimals = numericValue.includes(".")
+    ? numericValue.length - numericValue.indexOf(".") - 1
+    : 0;
+  const seed = `${daySeed}:${eventIndex}:${columnIndex}:${tick}`;
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = Math.imul(hash ^ seed.charCodeAt(index), 16777619);
+  }
+
+  const movement = (((hash >>> 0) / 0xffffffff) * 2 - 1) * 0.004;
+  const adjustedValue = Number(`${sign}${numericValue}`) * (1 + movement);
+  return `${adjustedValue.toFixed(decimals)}${suffix}`;
+}
+
 function getComparableValue(value: string) {
   const match = /^(-?)(\d+(?:\.\d+)?)/.exec(value);
   if (!match) return null;
@@ -112,14 +179,14 @@ function getComparableValue(value: string) {
 }
 
 function EventsCalendar() {
-  const [selectedDate, setSelectedDate] = useState("2026-10-06");
-  const [dailySeed, setDailySeed] = useState("");
-  const visibleEvents = selectedDate === "2026-10-06" ? events : [];
+  const [selectedDate, setSelectedDate] = useState(getLocalDateInputValue);
+  const [marketTick, setMarketTick] = useState(0);
+  const visibleEvents = events;
 
   useEffect(() => {
-    const updateDaySeed = () => setDailySeed(new Date().toISOString().slice(0, 10));
-    updateDaySeed();
-    const interval = window.setInterval(updateDaySeed, 60_000);
+    const interval = window.setInterval(() => {
+      setMarketTick((tick) => tick + 1);
+    }, 1800);
     return () => window.clearInterval(interval);
   }, []);
 
@@ -244,11 +311,12 @@ function EventsCalendar() {
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-5 sm:p-6">
               <div>
                 <h2 className="text-xl font-extrabold">Events calendar</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Illustrative estimates · Updated daily
-                </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800">
+                  <Radio className="size-3.5 animate-pulse" aria-hidden="true" />
+                  LIVE MARKET SIMULATION
+                </span>
                 <label htmlFor="calendar-date" className="text-sm font-semibold">
                   Custom dates
                 </label>
@@ -296,19 +364,13 @@ function EventsCalendar() {
                 <tbody className="divide-y divide-border">
                   {visibleEvents.map(
                     ([time, country, event, baseActual, baseForecast, basePrevious], index) => {
-                      const actual = getDailyValue(baseActual, dailySeed, index, 0);
-                      const forecast = getDailyValue(baseForecast, dailySeed, index, 1);
-                      const previous = getDailyValue(basePrevious, dailySeed, index, 2);
-                      const actualNumber = getComparableValue(actual);
-                      const previousNumber = getComparableValue(previous);
-                      const actualColor =
-                        actualNumber === null ||
-                        previousNumber === null ||
-                        actualNumber === previousNumber
-                          ? "text-foreground"
-                          : actualNumber > previousNumber
-                            ? "text-emerald-700"
-                            : "text-red-700";
+                      const baseValues = [baseActual, baseForecast, basePrevious];
+                      const currentValues = baseValues.map((value, columnIndex) =>
+                        getLiveMarketValue(value, selectedDate, index, columnIndex, marketTick),
+                      );
+                      const previousValues = baseValues.map((value, columnIndex) =>
+                        getLiveMarketValue(value, selectedDate, index, columnIndex, marketTick - 1),
+                      );
 
                       return (
                         <tr
@@ -333,17 +395,37 @@ function EventsCalendar() {
                           <th scope="row" className="px-4 py-3 font-semibold">
                             {event}
                           </th>
-                          <td
-                            className={`whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums ${actualColor}`}
-                          >
-                            {actual}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-right text-muted-foreground tabular-nums">
-                            {forecast}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-right text-muted-foreground tabular-nums">
-                            {previous}
-                          </td>
+                          {currentValues.map((value, columnIndex) => {
+                            const currentNumber = getComparableValue(value);
+                            const previousNumber = getComparableValue(previousValues[columnIndex]);
+                            const movingUp =
+                              currentNumber !== null &&
+                              previousNumber !== null &&
+                              currentNumber > previousNumber;
+                            const movingDown =
+                              currentNumber !== null &&
+                              previousNumber !== null &&
+                              currentNumber < previousNumber;
+
+                            return (
+                              <td
+                                key={columnIndex}
+                                className={`whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums ${
+                                  movingUp
+                                    ? "text-emerald-700"
+                                    : movingDown
+                                      ? "text-red-700"
+                                      : columnIndex === 0
+                                        ? "text-foreground"
+                                        : "text-muted-foreground"
+                                }`}
+                              >
+                                {movingUp && <span aria-hidden="true">▲ </span>}
+                                {movingDown && <span aria-hidden="true">▼ </span>}
+                                {value}
+                              </td>
+                            );
+                          })}
                         </tr>
                       );
                     },

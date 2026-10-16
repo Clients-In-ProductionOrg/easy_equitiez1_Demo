@@ -1,12 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Bell,
-  BookOpen,
-  Check,
-  ChevronRight,
-  Clock3,
   CreditCard,
   LayoutDashboard,
+  LoaderCircle,
   LockKeyhole,
   LogOut,
   Mail,
@@ -16,13 +13,18 @@ import {
   UserRound,
   Wallet,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  changeManualAccountPassword,
+  getActiveManualAccount,
+  type ManualAccount,
+} from "@/lib/manual-account-data";
 
 export const Route = createFileRoute("/profile-settings")({
   head: () => ({
@@ -47,11 +49,74 @@ const menuItems = [
 ];
 
 function ProfileSettings() {
-  const [notice, setNotice] = useState("");
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [account, setAccount] = useState<ManualAccount>();
+  const [loadError, setLoadError] = useState("");
+  const [isLoadingAccount, setIsLoadingAccount] = useState(true);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  useEffect(() => {
+    void getActiveManualAccount()
+      .then(setAccount)
+      .catch((error: unknown) => {
+        console.error("Unable to fetch profile details from Neon.", error);
+        setLoadError("Profile information could not be loaded from Neon.");
+      })
+      .finally(() => setIsLoadingAccount(false));
+  }, []);
+
+  async function handlePasswordUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPasswordMessage("");
+
+    if (!account) {
+      setPasswordMessage(
+        "Account information is not available. Please reload the page and try again.",
+      );
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage("The new passwords do not match.");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const result = await changeManualAccountPassword(account.id, currentPassword, newPassword);
+      if (!result.updated) {
+        setPasswordMessage("The current password is incorrect.");
+        return;
+      }
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordMessage("Your password has been updated successfully.");
+    } catch (error) {
+      console.error("Unable to update the account password.", error);
+      setPasswordMessage("Your password could not be updated. Please try again.");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-background text-foreground">
+      {isLoadingAccount && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/35 backdrop-blur-[2px]"
+        >
+          <div className="flex items-center gap-3 rounded-xl border border-border bg-card/95 px-5 py-4 shadow-lg">
+            <LoaderCircle className="size-5 animate-spin text-primary" aria-hidden="true" />
+            <span className="text-sm font-semibold">Loading your profile…</span>
+          </div>
+        </div>
+      )}
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
           <Link to="/" aria-label="EasyEquities home" className="inline-flex items-center gap-2">
@@ -153,8 +218,17 @@ function ProfileSettings() {
                     <UserRound className="size-10" aria-hidden="true" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-extrabold">Alex Morgan</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">Registered: 09.05.2022</p>
+                    <h2 className="text-xl font-extrabold">
+                      {account?.fullName ?? "No account loaded"}
+                    </h2>
+                    {account && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {account.accountType} · {account.status}
+                      </p>
+                    )}
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Registered: {account?.registeredDate ?? "Not available"}
+                    </p>
                   </div>
                 </div>
               </section>
@@ -170,14 +244,16 @@ function ProfileSettings() {
                       <Mail className="size-4" aria-hidden="true" />
                       Email
                     </dt>
-                    <dd className="mt-2 break-all font-semibold">a••••••@example.com</dd>
+                    <dd className="mt-2 break-all font-semibold">
+                      {account?.email ?? "Not available"}
+                    </dd>
                   </div>
                   <div className="rounded-xl border border-border bg-background p-4">
                     <dt className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Phone className="size-4" aria-hidden="true" />
                       Phone number
                     </dt>
-                    <dd className="mt-2 font-semibold">+27 •• ••• ••43</dd>
+                    <dd className="mt-2 font-semibold">{account?.phone || "Not available"}</dd>
                   </div>
                 </dl>
               </section>
@@ -190,24 +266,13 @@ function ProfileSettings() {
                 <dl className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <dt className="text-sm text-muted-foreground">Country</dt>
-                    <dd className="mt-1 font-semibold">South Africa</dd>
+                    <dd className="mt-1 font-semibold">{account?.country || "Not available"}</dd>
                   </div>
                   <div>
                     <dt className="text-sm text-muted-foreground">Address</dt>
-                    <dd className="mt-1 font-semibold">Giyani, Limpopo, South Africa</dd>
+                    <dd className="mt-1 font-semibold">{account?.address || "Not available"}</dd>
                   </div>
                 </dl>
-                <div className="mt-5 border-t border-border pt-4">
-                  <p className="text-sm text-muted-foreground">Social networks</p>
-                  <p className="mt-1 text-sm font-semibold">No social accounts connected</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setNotice("Profile contact editing is not available yet.")}
-                  className="mt-5 inline-flex h-9 items-center rounded-lg border border-input px-4 text-sm font-bold transition hover:bg-muted"
-                >
-                  Edit
-                </button>
               </section>
             </div>
 
@@ -217,48 +282,55 @@ function ProfileSettings() {
                   <LockKeyhole className="size-5 text-primary" aria-hidden="true" />
                   <h2 className="text-lg font-extrabold">Security</h2>
                 </div>
-                <div className="divide-y divide-border">
-                  <div className="flex items-center justify-between gap-3 py-4 first:pt-0">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Confirmation method</p>
-                      <p className="mt-1 font-semibold">Email</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 py-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Password</p>
-                      <p className="mt-1 font-semibold">••••••••••</p>
-                    </div>
-                    <button
-                      type="button"
-                      className="rounded-lg border border-input px-3 py-2 text-sm font-bold hover:bg-muted"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 py-4">
-                    <div>
-                      <p className="text-sm font-semibold">Two-factor authentication</p>
-                      <p className="mt-1 text-sm text-muted-foreground">Not enabled</p>
-                    </div>
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground">
-                      Off
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 py-4 last:pb-0">
-                    <div>
-                      <p className="text-sm font-semibold">Login history</p>
-                      <p className="mt-1 text-sm text-muted-foreground">Recent account access</p>
-                    </div>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 rounded-lg px-2 py-2 text-sm font-bold text-primary hover:bg-primary/5"
-                    >
-                      View history
-                      <ChevronRight className="size-4" aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
+                <form className="space-y-4" onSubmit={handlePasswordUpdate}>
+                  <label className="block space-y-2 text-sm font-semibold">
+                    Current password
+                    <input
+                      required
+                      type="password"
+                      autoComplete="current-password"
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(event.target.value)}
+                      className="h-11 w-full rounded-lg border border-input bg-background px-3 font-normal"
+                    />
+                  </label>
+                  <label className="block space-y-2 text-sm font-semibold">
+                    New password
+                    <input
+                      required
+                      minLength={8}
+                      type="password"
+                      autoComplete="new-password"
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      className="h-11 w-full rounded-lg border border-input bg-background px-3 font-normal"
+                    />
+                  </label>
+                  <label className="block space-y-2 text-sm font-semibold">
+                    Confirm new password
+                    <input
+                      required
+                      minLength={8}
+                      type="password"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      className="h-11 w-full rounded-lg border border-input bg-background px-3 font-normal"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={isUpdatingPassword || !account}
+                    className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isUpdatingPassword ? "Updating…" : "Update password"}
+                  </button>
+                  {passwordMessage && (
+                    <p role="status" className="text-sm text-muted-foreground">
+                      {passwordMessage}
+                    </p>
+                  )}
+                </form>
               </section>
 
               <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
@@ -266,47 +338,19 @@ function ProfileSettings() {
                   <CreditCard className="size-5 text-primary" aria-hidden="true" />
                   <h2 className="text-lg font-extrabold">Subscriptions</h2>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <Bell className="mt-0.5 size-4 text-muted-foreground" aria-hidden="true" />
-                    <div>
-                      <p className="font-semibold">Email notifications</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Receive account updates by email
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label={`Turn email notifications ${emailNotifications ? "off" : "on"}`}
-                    aria-pressed={emailNotifications}
-                    onClick={() => setEmailNotifications((enabled) => !enabled)}
-                    className={`flex size-9 shrink-0 items-center justify-center rounded-lg border transition ${
-                      emailNotifications
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input bg-background text-muted-foreground"
-                    }`}
-                  >
-                    {emailNotifications && <Check className="size-4" aria-hidden="true" />}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setNotice("Subscription preferences are saved for this session.")}
-                  className="mt-5 inline-flex h-9 items-center rounded-lg border border-input px-4 text-sm font-bold transition hover:bg-muted"
-                >
-                  Edit
-                </button>
+                <p className="text-sm text-muted-foreground">
+                  Notification preferences are not stored in the database.
+                </p>
               </section>
             </div>
           </div>
 
-          {notice && (
+          {loadError && (
             <p
               role="status"
               className="mt-6 rounded-xl border border-border bg-card px-4 py-3 text-sm"
             >
-              {notice}
+              {loadError}
             </p>
           )}
         </section>

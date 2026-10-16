@@ -1,7 +1,57 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Calculator, Eye, EyeOff, LockKeyhole, TrendingUp } from "lucide-react";
+import {
+  ArrowLeft,
+  Ban,
+  Calculator,
+  Clock,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  LockKeyhole,
+  Mail,
+  PauseCircle,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 import { useState, type FormEvent } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { brokerPartners } from "@/lib/broker-partners";
+import { authenticateManualAccount, setActiveManualAccount } from "@/lib/manual-account-data";
+
+const ACCOUNTS_EMAIL = "accounts@easyequities-sa.co.za";
+
+type RestrictedStatus = "Deactivated" | "Suspended" | "Pending";
+
+const restrictedStatusDetails: Record<
+  RestrictedStatus,
+  { icon: LucideIcon; message: string; iconClass: string; badgeClass: string }
+> = {
+  Deactivated: {
+    icon: Ban,
+    message: "Your account has been deactivated.",
+    iconClass: "bg-destructive/10 text-destructive",
+    badgeClass: "border-destructive/30 bg-destructive/10 text-destructive",
+  },
+  Suspended: {
+    icon: PauseCircle,
+    message: "Your account has been suspended.",
+    iconClass: "bg-orange-500/10 text-orange-600",
+    badgeClass: "border-orange-500/30 bg-orange-500/10 text-orange-600",
+  },
+  Pending: {
+    icon: Clock,
+    message: "Your account is pending approval.",
+    iconClass: "bg-amber-500/10 text-amber-600",
+    badgeClass: "border-amber-500/30 bg-amber-500/10 text-amber-600",
+  },
+};
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -19,10 +69,58 @@ export const Route = createFileRoute("/login")({
 function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [restrictedStatus, setRestrictedStatus] = useState<RestrictedStatus>();
+  const [lastRestrictedStatus, setLastRestrictedStatus] = useState<RestrictedStatus>();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const statusDetails = lastRestrictedStatus ? restrictedStatusDetails[lastRestrictedStatus] : null;
+  const StatusIcon = statusDetails?.icon;
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void navigate({ to: "/dashboard" });
+    if (isLoggingIn) return;
+    setLoginError("");
+    setRestrictedStatus(undefined);
+    setIsLoggingIn(true);
+
+    try {
+      const formData = new FormData(event.currentTarget);
+      const emailValue = String(formData.get("email") ?? "")
+        .trim()
+        .toLowerCase();
+      const passwordValue = String(formData.get("password") ?? "");
+      const companyValue = String(formData.get("company") ?? "").trim();
+      const registeredAccount = await authenticateManualAccount(
+        emailValue,
+        passwordValue,
+        companyValue,
+      );
+      if (registeredAccount && "restrictedStatus" in registeredAccount) {
+        setLastRestrictedStatus(registeredAccount.restrictedStatus);
+        setRestrictedStatus(registeredAccount.restrictedStatus);
+        return;
+      }
+      if (!registeredAccount) {
+        setLoginError("The company, email, or password is incorrect.");
+        return;
+      }
+
+      setActiveManualAccount(registeredAccount, registeredAccount.sessionToken);
+      localStorage.setItem(
+        "easyEquitiesUser",
+        JSON.stringify({
+          name: registeredAccount.fullName,
+          email: registeredAccount.email,
+        }),
+      );
+
+      void navigate({ to: "/dashboard" });
+    } catch (error) {
+      console.error("Unable to verify login credentials.", error);
+      setLoginError("Login could not be verified. Please try again.");
+    } finally {
+      setIsLoggingIn(false);
+    }
   }
 
   return (
@@ -66,6 +164,7 @@ function Login() {
                 id="company"
                 name="company"
                 defaultValue=""
+                required
                 className="h-12 w-full rounded-lg border border-input bg-card px-4 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <option value="" disabled>
@@ -86,10 +185,11 @@ function Login() {
               <input
                 id="email"
                 name="email"
-                type="text"
+                type="email"
                 inputMode="email"
                 autoComplete="email"
                 placeholder="you@example.com"
+                required
                 className="h-12 w-full rounded-lg border border-input bg-card px-4 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary"
               />
             </div>
@@ -99,9 +199,6 @@ function Login() {
                 <label htmlFor="password" className="text-sm font-bold text-foreground">
                   Password
                 </label>
-                <span className="text-xs font-medium text-muted-foreground">
-                  Password recovery coming soon
-                </span>
               </div>
               <div className="relative">
                 <input
@@ -110,6 +207,7 @@ function Login() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="Enter your password"
+                  required
                   className="h-12 w-full rounded-lg border border-input bg-card px-4 pr-12 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary"
                 />
                 <button
@@ -130,12 +228,84 @@ function Login() {
 
             <button
               type="submit"
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-base font-extrabold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              disabled={isLoggingIn}
+              aria-busy={isLoggingIn}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-base font-extrabold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-80"
             >
-              <LockKeyhole className="size-4" aria-hidden="true" />
-              Log in
+              {isLoggingIn ? (
+                <>
+                  <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+                  Checking…
+                </>
+              ) : (
+                <>
+                  <LockKeyhole className="size-4" aria-hidden="true" />
+                  Log in
+                </>
+              )}
             </button>
+            {loginError && (
+              <div
+                role="alert"
+                className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm"
+              >
+                <p className="font-semibold text-destructive">{loginError}</p>
+              </div>
+            )}
           </form>
+
+          <Dialog
+            open={restrictedStatus !== undefined}
+            onOpenChange={(open) => {
+              if (!open) setRestrictedStatus(undefined);
+            }}
+          >
+            <DialogContent className="w-[calc(100%-2rem)] max-w-md rounded-2xl p-6 sm:p-8">
+              {statusDetails && StatusIcon && lastRestrictedStatus && (
+                <>
+                  <DialogHeader className="items-center gap-3 text-center sm:text-center">
+                    <span
+                      className={`flex size-14 items-center justify-center rounded-full ${statusDetails.iconClass}`}
+                    >
+                      <StatusIcon className="size-7" aria-hidden="true" />
+                    </span>
+                    <span
+                      className={`rounded-full border px-3 py-1 text-xs font-extrabold uppercase tracking-[0.14em] ${statusDetails.badgeClass}`}
+                    >
+                      Account status: {lastRestrictedStatus}
+                    </span>
+                    <DialogTitle className="text-xl font-extrabold">Login unavailable</DialogTitle>
+                    <DialogDescription className="text-base leading-7 text-muted-foreground">
+                      {statusDetails.message} Please email{" "}
+                      <a
+                        href={`mailto:${ACCOUNTS_EMAIL}`}
+                        className="font-semibold text-primary underline"
+                      >
+                        {ACCOUNTS_EMAIL}
+                      </a>{" "}
+                      for assistance.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="gap-2 sm:justify-center sm:space-x-0">
+                    <button
+                      type="button"
+                      onClick={() => setRestrictedStatus(undefined)}
+                      className="inline-flex h-11 items-center justify-center rounded-lg border border-input px-5 font-bold transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      Close
+                    </button>
+                    <a
+                      href={`mailto:${ACCOUNTS_EMAIL}`}
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 font-bold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <Mail className="size-4" aria-hidden="true" />
+                      Email Accounts
+                    </a>
+                  </DialogFooter>
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
 
           <p className="mt-8 text-center text-xs leading-5 text-muted-foreground">
             Your investments are important. Never share your password with anyone.
